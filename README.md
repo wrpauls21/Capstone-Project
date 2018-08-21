@@ -16,7 +16,7 @@ My project will be to explore the relationship of Payroll on an MLB team and the
 
 ## Ideas to answer questions
 
-1. I want to see if payroll effect the success of MLB teams
+1. I want to see if payroll affects the success of MLB teams
 
 2. My client is MLB owners/GMs and they could decide to spend more money in free angency to improve team if it is determined that an increased payroll does in fact lead to more success.
 
