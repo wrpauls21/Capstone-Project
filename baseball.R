@@ -91,3 +91,14 @@ wins <- baseball %>%
 baseball <- merge(baseball, wins, by="yearID")
 baseball <- baseball %>% 
   mutate(mlbdolperwin = mlbpayroll/mlbwin)
+
+baseball <- baseball %>% group_by(yearID) %>% mutate(payrank = dense_rank((desc(payroll))))
+
+
+
+ggplot(subset(baseball, teamID =="KCR"), aes(payrank, winpercent)) + geom_point(color="blue") + labs(title = "Royals", x = "Payroll Rank") 
+
+
+
+lm <- lm(baseball$winpercent~baseball$payrank)
+summary(lm)
