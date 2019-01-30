@@ -6,7 +6,7 @@ library(ggplot2)
 
 # make team data frame with necessary variables
 teams = Teams
-teams = subset(teams, select = c(yearID, lgID, teamID, Rank, G, W, L)) 
+teams = subset(teams, select = c(yearID, lgID, teamID, Rank, G, W, L, DivWin, WCWin)) 
 
 # grab teams from 1985 and on to match with years of payroll information
 teams = filter(teams, yearID >=1985)
@@ -14,6 +14,11 @@ teams = filter(teams, yearID >=1985)
 # add winning % column
 teams = mutate(teams, winpercent = round((W/(W+L)), digits = 3))
 
+# add a playoffs column
+teams$DivWin[is.na(teams$DivWin)] <- "N"
+teams$WCWin[is.na(teams$WCWin)] <- "N"
+teams <- mutate(teams, playoffs = if_else(DivWin == 'Y' | WCWin == 'Y', 'Y', 'N'))
+teams = subset(teams, select = -c(DivWin, WCWin))
 # add salaries to a data frame
 sals = Salaries          
 
@@ -55,7 +60,7 @@ baseball <- merge(teams, sals, by=c("yearID", "teamID"))
 
 baseball$teamID[baseball$teamID=="ML4"] <- "MIL"
 baseball$yearID <- as.factor(baseball$yearID)
-
+baseball$playoffs <- as.factor(baseball$playoffs)
 # calculate Amount of payroll per team win
 baseball <- baseball %>% mutate(dolperwin = payroll/W)
 
@@ -94,11 +99,49 @@ baseball <- baseball %>%
 
 baseball <- baseball %>% group_by(yearID) %>% mutate(payrank = dense_rank((desc(payroll))))
 
+# calculate teams difference in payroll from previous year
+baseball<- baseball %>%
+  arrange(teamID, yearID) %>%
+  group_by(teamID) %>%
+  mutate(paydiff = payroll - lag(payroll)) 
 
+# +/- % change of payroll from previous year
+baseball<- baseball %>%
+  arrange(teamID, yearID) %>%
+  group_by(teamID) %>%
+  mutate(percentdiff = paydiff/lag(payroll)) 
 
-ggplot(subset(baseball, teamID =="KCR"), aes(payrank, winpercent)) + geom_point(color="blue") + labs(title = "Royals", x = "Payroll Rank") 
+baseball$percentdiff <- round(baseball$percentdiff, 4)
 
+## calculate change in winning percentage from previous year
+baseball<- baseball %>%
+  arrange(teamID, yearID) %>%
+  group_by(teamID) %>%
+  mutate(winpercentdiff = winpercent - lag(winpercent)) 
 
+# create column to test if payroll increased for team
+baseball$payincreased[baseball$paydiff<=0]<- "No"
+baseball$payincreased[baseball$paydiff>0]<- "Yes"
 
+baseball$payincreased <- as.factor(baseball$payincreased)
+
+# create a column to test if winning % increased for team
+baseball$winincreased[baseball$winpercentdiff<=0]<- "No"
+baseball$winincreased[baseball$winpercentdiff>0]<- "Yes"
+
+baseball$winincreased <- as.factor(baseball$winincreased)
+
+# summary of teams whose winning increased after pay increased
+summary(baseball$winincreased[baseball$payincreased=="Yes"])
+
+# plot of Royals Payroll rank vs win percent
+ggplot(subset(baseball, teamID =="KCR"), aes(payrank, winpercent)) + geom_point() + geom_abline(baseball, slope = -.0030585, intercept = .5455626) + labs(title = "Royals", x = "Payroll Rank") 
+
+# same plot using whether they made playoffs as icon label
+ggplot(subset(baseball, teamID=="KCR"), aes(payrank, winpercent, label = playoffs)) + geom_text() + geom_abline(baseball, slope = -.0030585, intercept = .5455626)
+
+# linear regression y = winning % x = payroll rank
 lm <- lm(baseball$winpercent~baseball$payrank)
 summary(lm)
+
+
