@@ -1,0 +1,39 @@
+---
+title: "Capstone Data Wrangling"
+author: "Will Pauls"
+date: "February 5, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data wrangling 
+
+For my Capstone project I will be pulling from the Teams and Salaries datasets from the Lahman package. Performing data wrangling tasks and merging them into a new dataset called baseball
+
+## Steps
+1. Load in Teams dataset with necessary variables
+2. Since Salary info dates back only to 1985 I filtered the Teams dataset from 1985 and on to match 
+3. I added a column in teams for winning %
+4. I added a column with a boolean data type (Y/N) of whether that team made the playoffs
+5. I loaded in the Salaries dataset
+6. I summed up team payroll by grouping by year and team
+7. I standardized team names in each data set to prepare for merge
+8. I merged the teams and salaries datasets into a new one I named baseball
+9. I created a column in baseball calculating the amount of payroll per team win (Payroll/W)
+10. I calculatedd the average payroll in the MLB per year by summing each teams payroll by year and dividing by the number of teams for that year and added it to a new column in baseball
+11. I divided each teams payroll by the the total MLB payroll to get a % of payroll each team has compared to entire league and added it into a new column
+12. I added a column that calculated the average amount of MLB payroll per each win
+13. I added a column with the difference in payroll from the previous year for each team
+14. I created a % change of that difference in a new column
+15. I created a column with a difference in winning % from the previous year for each team
+16. I created a column to test if payroll increased for each team that year
+17. I created a column to test if winning % increased for each team that year
+
+
+
+
+
+
