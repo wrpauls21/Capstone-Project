@@ -1,0 +1,253 @@
+---
+title: "Probability and Statistics"
+author: "Will Pauls"
+date: "February 19, 2019"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(Lahman)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(car)
+library(MASS)
+library(gvlma)
+library(ggplot2)
+
+# make team data frame with necessary variables
+teams = Teams
+teams = subset(teams, select = c(yearID, lgID, teamID, Rank, G, W, L, DivWin, WCWin)) 
+
+# grab teams from 1985 and on to match with years of payroll information
+teams = filter(teams, yearID >=1985)
+
+# add winning % column
+teams = mutate(teams, winpercent = round((W/(W+L)), digits = 3))
+
+# add a playoffs column
+teams$DivWin[is.na(teams$DivWin)] <- "N"
+teams$WCWin[is.na(teams$WCWin)] <- "N"
+teams <- mutate(teams, playoffs = if_else(DivWin == 'Y' | WCWin == 'Y', 'Y', 'N'))
+teams = subset(teams, select = -c(DivWin, WCWin))
+# add salaries to a data frame
+sals = read_csv("Salaries.csv")          
+
+# Get team payroll for each year
+sals <- sals %>% 
+  group_by(yearID, teamID) %>% 
+    summarise(payroll = sum(salary))
+
+#Standardize team names 
+sals$teamID[sals$teamID=="CHN"] <- "CHC"
+sals$teamID[sals$teamID=="CHA"] <- "CHW"
+sals$teamID[sals$teamID=="KCA"] <- "KCR"
+sals$teamID[sals$teamID=="LAN"] <- "LAD"
+sals$teamID[sals$teamID=="NYN"] <- "NYM"
+sals$teamID[sals$teamID=="NYA"] <- "NYY"
+sals$teamID[sals$teamID=="SDN"] <- "SDP"
+sals$teamID[sals$teamID=="SFN"] <- "SFG"
+sals$teamID[sals$teamID=="SLN"] <- "STL"
+sals$teamID[sals$teamID=="TBA"] <- "TBR"
+sals$teamID[sals$teamID=="WSN"] <- "WAS"
+
+teams$teamID <- as.character(teams$teamID)
+teams$teamID[teams$teamID=="CHN"] <- "CHC"
+teams$teamID[teams$teamID=="CHN"] <- "CHC"
+teams$teamID[teams$teamID=="CHA"] <- "CHW"
+teams$teamID[teams$teamID=="KCA"] <- "KCR"
+teams$teamID[teams$teamID=="LAN"] <- "LAD"
+teams$teamID[teams$teamID=="NYN"] <- "NYM"
+teams$teamID[teams$teamID=="NYA"] <- "NYY"
+teams$teamID[teams$teamID=="SDN"] <- "SDP"
+teams$teamID[teams$teamID=="SFN"] <- "SFG"
+teams$teamID[teams$teamID=="SLN"] <- "STL"
+teams$teamID[teams$teamID=="TBA"] <- "TBR"
+teams$teamID[teams$teamID=="WSN"] <- "WAS"
+teams$teamID <- as.factor(teams$teamID)
+
+# merge data into baseball
+baseball <- merge(teams, sals, by=c("yearID", "teamID"))
+
+baseball$teamID[baseball$teamID=="ML4"] <- "MIL"
+baseball$yearID <- as.factor(baseball$yearID)
+baseball$playoffs <- as.factor(baseball$playoffs)
+
+# calculate Amount of payroll per team win
+baseball <- baseball %>% mutate(dolperwin = payroll/W)
+
+#calculate total payroll per year for entire MLB
+mlb <- baseball %>% 
+  group_by(yearID) %>% 
+     summarise(mlbpayroll = sum(as.numeric(payroll)))
+
+# get number of teams for each year
+ numteams <-  baseball %>% 
+  group_by(yearID) %>%
+  summarise(numteams =length(yearID))
+
+mlb$numteams <- numteams$numteams
+
+# calculate average payroll per year
+mlb <- mlb %>% 
+  mutate(avgpayroll = mlbpayroll/numteams)
+mlb <- subset(mlb, select = -c(numteams))
+
+# merge into baseball data set
+baseball <- merge(baseball, mlb, by="yearID")
+
+# calculate percentange of total payroll each team has
+baseball <- baseball %>% 
+  mutate(percentofmlb = round((payroll/mlbpayroll), digits = 4))
+
+#calculate average dollars of mlb payroll per win
+wins <- baseball %>% 
+  group_by(yearID) %>% 
+  summarise(mlbwin= (sum(W)))
+
+baseball <- merge(baseball, wins, by="yearID")
+baseball <- baseball %>% 
+  mutate(mlbdolperwin = mlbpayroll/mlbwin)
+
+baseball <- baseball %>% group_by(yearID) %>% mutate(payrank = dense_rank((desc(payroll))))
+
+# calculate teams difference in payroll from previous year
+baseball<- baseball %>%
+  arrange(teamID, yearID) %>%
+  group_by(teamID) %>%
+  mutate(paydiff = payroll - lag(payroll)) 
+
+# +/- % change of payroll from previous year
+baseball<- baseball %>%
+  arrange(teamID, yearID) %>%
+  group_by(teamID) %>%
+  mutate(percentdiff = paydiff/lag(payroll)) 
+
+baseball$percentdiff <- round(baseball$percentdiff, 4)
+
+## calculate change in winning percentage from previous year
+baseball<- baseball %>%
+  arrange(teamID, yearID) %>%
+  group_by(teamID) %>%
+  mutate(winpercentdiff = winpercent - lag(winpercent)) 
+
+## calculate change in percent of mlb from previous year
+baseball<- baseball %>%
+  arrange(teamID, yearID) %>%
+  group_by(teamID) %>%
+  mutate(percentofmlbdiff = percentofmlb - lag(percentofmlb)) 
+
+## calculate change in payroll rank from previous year
+baseball<- baseball %>%
+  arrange(teamID, yearID) %>%
+  group_by(teamID) %>%
+  mutate(payrankdiff = payrank - lag(payrank)) 
+
+# create column to test if payroll increased for team
+baseball$payincreased[baseball$paydiff<=0]<- "No"
+baseball$payincreased[baseball$paydiff>0]<- "Yes"
+
+baseball$payincreased <- as.factor(baseball$payincreased)
+
+# create a column to test if winning % increased for team
+baseball$winincreased[baseball$winpercentdiff<=0]<- "No"
+baseball$winincreased[baseball$winpercentdiff>0]<- "Yes"
+
+baseball$winincreased <- as.factor(baseball$winincreased)
+
+# create a column to test if percent of mlb increased for team
+baseball$percentofmlbincreased[baseball$percentofmlbdiff<=0]<- "No"
+baseball$percentofmlbincreased[baseball$percentofmlbdiff>0]<- "Yes"
+
+baseball$percentofmlbincreased <- as.factor(baseball$percentofmlbincreased)
+
+# create column to test if payroll increased for team
+baseball$payrankincreased[baseball$payrankdiff<=0]<- "No"
+baseball$payrankincreased[baseball$payrankdiff>0]<- "Yes"
+
+baseball$payrankincreased <- as.factor(baseball$payrankincreased)
+```
+## Machine Learning
+
+### Hypothesis
+
+$H_0$: $\beta_1$ = 0 - Teams payroll rank has no linear relationship with their winning %       
+$H_0$: $\beta_1$ $\neq$ 0 - Teams payroll rank has a linear relationship with their winning % 
+
+####Linear regression summary with confidence interval      
+```{r primary, echo=FALSE}
+# Here you can produce relevant tables and plots for your secondary objective
+# The example below produces some plots using functions already defined in 
+# another script
+MLB <- lm(baseball$winpercent~baseball$payrank)
+summary(MLB)
+
+confint(MLB)
+
+```
+The P-value is practically 0 so there is a signifcant result and we can reject the null hypothesis and conclude that there is a linear realtionship between a teams winning % and where they rank in Team Payroll.
+
+```{r}
+plot(baseball$winpercent~jitter(baseball$payrank), main = "Win % vs Payroll Rank", xlab = "Payroll Rank", ylab = "Win %", pch = 16, col = "dark grey")
+abline(MLB)
+```
+
+### Testing Linear Regression Assumptions
+
+####Assessing Outliers        
+```{r}
+# Assessing Outliers
+
+outlierTest(MLB) # Bonferonni p-value for most extreme obs
+```
+There are no outliers that would influence our model in a signifcant way.
+
+####Normality of Residuals                               
+```{r}
+# Normality of Residuals
+
+qqPlot(MLB, main="QQ Plot") #qq plot for studentized resid 
+```
+
+#### Distribution of studentized residuals
+
+```{r}
+# distribution of studentized residuals
+
+sresid <- studres(MLB) 
+hist(sresid, freq=FALSE, 
+     main="Distribution of Studentized Residuals")
+xfit<-seq(min(sresid),max(sresid),length=40) 
+yfit<-dnorm(xfit) 
+lines(xfit, yfit)
+
+# plot studentized residuals vs. fitted values 
+plot(fitted(MLB), residuals(MLB))
+abline(h = 0)
+plot(fitted(MLB), abs(residuals(MLB)))
+summary(lm(abs(residuals(MLB))~fitted(MLB)))
+```
+After testing the residuals we can conclude that are data is an approximately normal distribution which is needed to fit are assumptions in our linear model. 
+
+####Evaluation of homoscedasticity        
+```{r}
+# Evaluate homoscedasticity
+# non-constant error variance test
+ncvTest(MLB)
+```
+Since the P-value is .84 we can conclude that the standard deviations of the error terms are constant and do not depend on the x-value, which is an assumption needed for our linear model.
+
+####Global validation of linear model assumptions .        
+```{r}
+gvmodel <- gvlma(MLB) 
+summary(gvmodel)
+```
+All assumptions to our linear model are acceptable.
+
+## Conclusion
+
+The plot of team payroll rank and winning % showed a clear negative linear relationship. Meaning that as the Teams drop lower in the ranks of team payroll, their winning % is expected to also decrease. After performing all the diagnostic tests, the model passed each one confirming that it is a good model fit. The summary of the model showed a significant relationship between payroll rank and winning % at an $\alpha$ = .05 level, therefore, we can reject the null hypothesis $H_0$ and conclude, $H_a$ that there is a relationship between where a team ranks in team payroll and their winning %. According to our model for every spot a team drops in team payroll rank, their winning % is expected to decrease by 0.3%, and over a 162 game season that would be alomost 15 less wins expected  for the 30th ranked payroll vs the 1st ranked Payroll.
