@@ -1,8 +1,17 @@
+########## Capstone Project ################
 
+# Load Packages
+library(DT)
+library(readr)
 library(Lahman)
 library(tidyr)
 library(dplyr)
+library(car)
+library(MASS)
+library(gvlma)
 library(ggplot2)
+
+############ Data Wrangling ########################
 
 # make team data frame with necessary variables
 teams = Teams
@@ -61,6 +70,7 @@ baseball <- merge(teams, sals, by=c("yearID", "teamID"))
 baseball$teamID[baseball$teamID=="ML4"] <- "MIL"
 baseball$yearID <- as.factor(baseball$yearID)
 baseball$playoffs <- as.factor(baseball$playoffs)
+
 # calculate Amount of payroll per team win
 baseball <- baseball %>% mutate(dolperwin = payroll/W)
 
@@ -119,6 +129,18 @@ baseball<- baseball %>%
   group_by(teamID) %>%
   mutate(winpercentdiff = winpercent - lag(winpercent)) 
 
+## calculate change in percent of mlb from previous year
+baseball<- baseball %>%
+  arrange(teamID, yearID) %>%
+  group_by(teamID) %>%
+  mutate(percentofmlbdiff = percentofmlb - lag(percentofmlb)) 
+
+## calculate change in payroll rank from previous year
+baseball<- baseball %>%
+  arrange(teamID, yearID) %>%
+  group_by(teamID) %>%
+  mutate(payrankdiff = payrank - lag(payrank)) 
+
 # create column to test if payroll increased for team
 baseball$payincreased[baseball$paydiff<=0]<- "No"
 baseball$payincreased[baseball$paydiff>0]<- "Yes"
@@ -131,17 +153,112 @@ baseball$winincreased[baseball$winpercentdiff>0]<- "Yes"
 
 baseball$winincreased <- as.factor(baseball$winincreased)
 
-# summary of teams whose winning increased after pay increased
-summary(baseball$winincreased[baseball$payincreased=="Yes"])
+# create a column to test if percent of mlb increased for team
+baseball$percentofmlbincreased[baseball$percentofmlbdiff<=0]<- "No"
+baseball$percentofmlbincreased[baseball$percentofmlbdiff>0]<- "Yes"
 
-# plot of Royals Payroll rank vs win percent
-ggplot(subset(baseball, teamID =="KCR"), aes(payrank, winpercent)) + geom_point() + geom_abline(baseball, slope = -.0030585, intercept = .5455626) + labs(title = "Royals", x = "Payroll Rank") 
+baseball$percentofmlbincreased <- as.factor(baseball$percentofmlbincreased)
 
-# same plot using whether they made playoffs as icon label
-ggplot(subset(baseball, teamID=="KCR"), aes(payrank, winpercent, label = playoffs)) + geom_text() + geom_abline(baseball, slope = -.0030585, intercept = .5455626)
+# create column to test if payroll increased for team
+baseball$payrankincreased[baseball$payrankdiff<=0]<- "No"
+baseball$payrankincreased[baseball$payrankdiff>0]<- "Yes"
 
-# linear regression y = winning % x = payroll rank
-lm <- lm(baseball$winpercent~baseball$payrank)
-summary(lm)
+baseball$payrankincreased <- as.factor(baseball$payrankincreased)
 
+# write.csv(baseball, file = "baseball.csv")
+
+
+################## Probability & Statistics #############################
+
+# summary of teams whose winning increased after payroll rank increased
+summary(baseball$winincreased[baseball$payrankincreased=="Yes"])
+
+# summary of teams whose winning increased after payroll rank decreased
+summary(baseball$winincreased[baseball$payrankincreased=="No"])
+
+
+# bar plot of win % increase and Payroll Rank Increase
+barplot(matrix(c(189,183,248,264),nr=2), beside=T, 
+        col=c("blue","red"), ylim = c(0,300), 
+        names.arg=c("Payroll Rank Increased", "Payroll Rank Decreased"))
+legend("topleft", c("Win % Increased","Win % Decreased"), pch=15, 
+       col=c("blue","red"), 
+       bty="n")
+
+## Z-test
+payranktest <- prop.test(x = c(189, 248), n = c((189+183), (248+264)), alternative = "greater")
+# Printing the results
+payranktest 
+
+
+# summary of teams whose winning increased after % of mlb pay increased
+summary(baseball$winincreased[baseball$percentofmlbincreased=="Yes"])
+
+# summary of teams whose winning increased after % of mlb pay decreased
+summary(baseball$winincreased[baseball$percentofmlbincreased=="No"])
+
+
+# bar plot of win % increase and % of MLB Payroll Increase
+barplot(matrix(c(224,248,213,199),nr=2), beside=T, 
+        col=c("blue","red"), ylim = c(0,300),
+        names.arg=c("% of MLB Payroll Increased", "% of MLB Payroll Decreased"))
+legend("topleft", c("Win % Increased","Win % Decreased"), pch=15, 
+       col=c("blue","red"), 
+       bty="n")
+
+
+# Z-Test
+payrolltest <- prop.test(x = c(224, 213), n = c((224+248), (213+199)))
+# Printing the results
+payrolltest
+
+################ Machine Learning #########################
+
+#Linear regression summary with confidence interval      
+MLB <- lm(baseball$winpercent~baseball$payrank)
+summary(MLB)
+
+confint(MLB)
+
+# plot Win % vs Payrank
+plot(baseball$winpercent~jitter(baseball$payrank), main = "Win % vs Payroll Rank", xlab = "Payroll Rank", ylab = "Win %", pch = 16, col = "dark grey")
+abline(MLB)
+
+
+# Testing Linear Regression Assumptions
+
+
+# Assessing Outliers
+
+outlierTest(MLB) # Bonferonni p-value for most extreme obs
+
+# Normality of Residuals
+
+qqPlot(MLB, main="QQ Plot") #qq plot for studentized resid 
+
+# distribution of studentized residuals
+
+sresid <- studres(MLB) 
+hist(sresid, freq=FALSE, 
+     main="Distribution of Studentized Residuals")
+xfit<-seq(min(sresid),max(sresid),length=40) 
+yfit<-dnorm(xfit) 
+lines(xfit, yfit)
+
+# plot studentized residuals vs. fitted values 
+plot(fitted(MLB), residuals(MLB))
+abline(h = 0)
+plot(fitted(MLB), abs(residuals(MLB)))
+summary(lm(abs(residuals(MLB))~fitted(MLB)))
+
+
+# Evaluate homoscedasticity
+# non-constant error variance test
+ncvTest(MLB)
+
+
+#Global validation of linear model assumptions
+gvmodel <- gvlma(MLB) 
+summary(gvmodel)
+#########################################################
 

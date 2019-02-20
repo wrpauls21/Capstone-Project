@@ -11,6 +11,7 @@
 
 <meta name="author" content="Will Pauls" />
 
+<meta name="date" content="2019-02-18" />
 
 <title>Capstone Data Wrangling</title>
 
@@ -118,7 +119,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Capstone Data Wrangling</h1>
 <h4 class="author"><em>Will Pauls</em></h4>
-<h4 class="date"><em>February 5, 2019</em></h4>
+<h4 class="date"><em>February 18, 2019</em></h4>
 
 </div>
 
@@ -131,23 +132,199 @@ $(document).ready(function () {
 <h2>Steps</h2>
 <ol style="list-style-type: decimal">
 <li>Load in Teams dataset with necessary variables</li>
+</ol>
+<pre class="r"><code># make team data frame with necessary variables
+teams = Teams
+teams = subset(teams, select = c(yearID, lgID, teamID, Rank, G, W, L, DivWin, WCWin)) </code></pre>
+<ol start="2" style="list-style-type: decimal">
 <li>Since Salary info dates back only to 1985 I filtered the Teams dataset from 1985 and on to match</li>
+</ol>
+<pre class="r"><code># grab teams from 1985 and on to match with years of payroll information
+teams = filter(teams, yearID &gt;=1985)</code></pre>
+<ol start="3" style="list-style-type: decimal">
 <li>I added a column in teams for winning %</li>
+</ol>
+<pre class="r"><code># add winning % column
+teams = mutate(teams, winpercent = round((W/(W+L)), digits = 3))</code></pre>
+<ol start="4" style="list-style-type: decimal">
 <li>I added a column with a boolean data type (Y/N) of whether that team made the playoffs</li>
+</ol>
+<pre class="r"><code># add a playoffs column
+teams$DivWin[is.na(teams$DivWin)] &lt;- &quot;N&quot;
+teams$WCWin[is.na(teams$WCWin)] &lt;- &quot;N&quot;
+teams &lt;- mutate(teams, playoffs = if_else(DivWin == 'Y' | WCWin == 'Y', 'Y', 'N'))
+teams = subset(teams, select = -c(DivWin, WCWin))</code></pre>
+<ol start="5" style="list-style-type: decimal">
 <li>I loaded in the Salaries dataset</li>
+</ol>
+<pre class="r"><code># add salaries to a data frame
+sals = read_csv(&quot;Salaries.csv&quot;) </code></pre>
+<ol start="6" style="list-style-type: decimal">
 <li>I summed up team payroll by grouping by year and team</li>
+</ol>
+<pre class="r"><code># Get team payroll for each year
+sals &lt;- sals %&gt;% 
+  group_by(yearID, teamID) %&gt;% 
+    summarise(payroll = sum(salary))</code></pre>
+<ol start="7" style="list-style-type: decimal">
 <li>I standardized team names in each data set to prepare for merge</li>
+</ol>
+<pre class="r"><code>#Standardize team names 
+sals$teamID[sals$teamID==&quot;CHN&quot;] &lt;- &quot;CHC&quot;
+sals$teamID[sals$teamID==&quot;CHA&quot;] &lt;- &quot;CHW&quot;
+sals$teamID[sals$teamID==&quot;KCA&quot;] &lt;- &quot;KCR&quot;
+sals$teamID[sals$teamID==&quot;LAN&quot;] &lt;- &quot;LAD&quot;
+sals$teamID[sals$teamID==&quot;NYN&quot;] &lt;- &quot;NYM&quot;
+sals$teamID[sals$teamID==&quot;NYA&quot;] &lt;- &quot;NYY&quot;
+sals$teamID[sals$teamID==&quot;SDN&quot;] &lt;- &quot;SDP&quot;
+sals$teamID[sals$teamID==&quot;SFN&quot;] &lt;- &quot;SFG&quot;
+sals$teamID[sals$teamID==&quot;SLN&quot;] &lt;- &quot;STL&quot;
+sals$teamID[sals$teamID==&quot;TBA&quot;] &lt;- &quot;TBR&quot;
+sals$teamID[sals$teamID==&quot;WSN&quot;] &lt;- &quot;WAS&quot;
+
+teams$teamID &lt;- as.character(teams$teamID)
+teams$teamID[teams$teamID==&quot;CHN&quot;] &lt;- &quot;CHC&quot;
+teams$teamID[teams$teamID==&quot;CHN&quot;] &lt;- &quot;CHC&quot;
+teams$teamID[teams$teamID==&quot;CHA&quot;] &lt;- &quot;CHW&quot;
+teams$teamID[teams$teamID==&quot;KCA&quot;] &lt;- &quot;KCR&quot;
+teams$teamID[teams$teamID==&quot;LAN&quot;] &lt;- &quot;LAD&quot;
+teams$teamID[teams$teamID==&quot;NYN&quot;] &lt;- &quot;NYM&quot;
+teams$teamID[teams$teamID==&quot;NYA&quot;] &lt;- &quot;NYY&quot;
+teams$teamID[teams$teamID==&quot;SDN&quot;] &lt;- &quot;SDP&quot;
+teams$teamID[teams$teamID==&quot;SFN&quot;] &lt;- &quot;SFG&quot;
+teams$teamID[teams$teamID==&quot;SLN&quot;] &lt;- &quot;STL&quot;
+teams$teamID[teams$teamID==&quot;TBA&quot;] &lt;- &quot;TBR&quot;
+teams$teamID[teams$teamID==&quot;WSN&quot;] &lt;- &quot;WAS&quot;
+teams$teamID &lt;- as.factor(teams$teamID)</code></pre>
+<ol start="8" style="list-style-type: decimal">
 <li>I merged the teams and salaries datasets into a new one I named baseball</li>
+</ol>
+<pre class="r"><code># merge data into baseball
+baseball &lt;- merge(teams, sals, by=c(&quot;yearID&quot;, &quot;teamID&quot;))
+
+baseball$teamID[baseball$teamID==&quot;ML4&quot;] &lt;- &quot;MIL&quot;
+baseball$yearID &lt;- as.factor(baseball$yearID)
+baseball$playoffs &lt;- as.factor(baseball$playoffs)</code></pre>
+<ol start="9" style="list-style-type: decimal">
 <li>I created a column in baseball calculating the amount of payroll per team win (Payroll/W)</li>
-<li>I calculatedd the average payroll in the MLB per year by summing each teams payroll by year and dividing by the number of teams for that year and added it to a new column in baseball</li>
+</ol>
+<pre class="r"><code># calculate Amount of payroll per team win
+baseball &lt;- baseball %&gt;% mutate(dolperwin = payroll/W)</code></pre>
+<ol start="10" style="list-style-type: decimal">
+<li>I calculated the average payroll in the MLB per year by summing each teams payroll by year and dividing by the number of teams for that year and added it to a new column in baseball</li>
+</ol>
+<pre class="r"><code>#calculate total payroll per year for entire MLB
+mlb &lt;- baseball %&gt;% 
+  group_by(yearID) %&gt;% 
+     summarise(mlbpayroll = sum(as.numeric(payroll)))
+
+# get number of teams for each year
+ numteams &lt;-  baseball %&gt;% 
+  group_by(yearID) %&gt;%
+  summarise(numteams =length(yearID))
+
+mlb$numteams &lt;- numteams$numteams
+
+# calculate average payroll per year
+mlb &lt;- mlb %&gt;% 
+  mutate(avgpayroll = mlbpayroll/numteams)
+mlb &lt;- subset(mlb, select = -c(numteams))
+
+# merge into baseball data set
+baseball &lt;- merge(baseball, mlb, by=&quot;yearID&quot;)</code></pre>
+<ol start="11" style="list-style-type: decimal">
 <li>I divided each teams payroll by the the total MLB payroll to get a % of payroll each team has compared to entire league and added it into a new column</li>
+</ol>
+<pre class="r"><code># calculate percentange of total payroll each team has
+baseball &lt;- baseball %&gt;% 
+  mutate(percentofmlb = round((payroll/mlbpayroll), digits = 4))</code></pre>
+<ol start="12" style="list-style-type: decimal">
 <li>I added a column that calculated the average amount of MLB payroll per each win</li>
+</ol>
+<pre class="r"><code>#calculate average dollars of mlb payroll per win
+wins &lt;- baseball %&gt;% 
+  group_by(yearID) %&gt;% 
+  summarise(mlbwin= (sum(W)))
+
+baseball &lt;- merge(baseball, wins, by=&quot;yearID&quot;)
+baseball &lt;- baseball %&gt;% 
+  mutate(mlbdolperwin = mlbpayroll/mlbwin)
+
+baseball &lt;- baseball %&gt;% group_by(yearID) %&gt;% mutate(payrank = dense_rank((desc(payroll))))</code></pre>
+<ol start="13" style="list-style-type: decimal">
 <li>I added a column with the difference in payroll from the previous year for each team</li>
+</ol>
+<pre class="r"><code># calculate teams difference in payroll from previous year
+baseball&lt;- baseball %&gt;%
+  arrange(teamID, yearID) %&gt;%
+  group_by(teamID) %&gt;%
+  mutate(paydiff = payroll - lag(payroll)) </code></pre>
+<ol start="14" style="list-style-type: decimal">
 <li>I created a % change of that difference in a new column</li>
+</ol>
+<pre class="r"><code># +/- % change of payroll from previous year
+baseball&lt;- baseball %&gt;%
+  arrange(teamID, yearID) %&gt;%
+  group_by(teamID) %&gt;%
+  mutate(percentdiff = paydiff/lag(payroll)) 
+
+baseball$percentdiff &lt;- round(baseball$percentdiff, 4)</code></pre>
+<ol start="15" style="list-style-type: decimal">
 <li>I created a column with a difference in winning % from the previous year for each team</li>
+</ol>
+<pre class="r"><code>## calculate change in winning percentage from previous year
+baseball&lt;- baseball %&gt;%
+  arrange(teamID, yearID) %&gt;%
+  group_by(teamID) %&gt;%
+  mutate(winpercentdiff = winpercent - lag(winpercent)) </code></pre>
+<ol start="16" style="list-style-type: decimal">
+<li>I created a column with a difference in a teams % of MLB payroll from previous year</li>
+</ol>
+<pre class="r"><code>## calculate change in percent of mlb from previous year
+baseball&lt;- baseball %&gt;%
+  arrange(teamID, yearID) %&gt;%
+  group_by(teamID) %&gt;%
+  mutate(percentofmlbdiff = percentofmlb - lag(percentofmlb)) </code></pre>
+<ol start="17" style="list-style-type: decimal">
+<li>I created a column with the differencr in Payroll Rank from the previous year</li>
+</ol>
+<pre class="r"><code>## calculate change in payroll rank from previous year
+baseball&lt;- baseball %&gt;%
+  arrange(teamID, yearID) %&gt;%
+  group_by(teamID) %&gt;%
+  mutate(payrankdiff = payrank - lag(payrank)) </code></pre>
+<ol start="18" style="list-style-type: decimal">
 <li>I created a column to test if payroll increased for each team that year</li>
+</ol>
+<pre class="r"><code># create column to test if payroll increased for team
+baseball$payincreased[baseball$paydiff&lt;=0]&lt;- &quot;No&quot;
+baseball$payincreased[baseball$paydiff&gt;0]&lt;- &quot;Yes&quot;
+
+baseball$payincreased &lt;- as.factor(baseball$payincreased)</code></pre>
+<ol start="19" style="list-style-type: decimal">
 <li>I created a column to test if winning % increased for each team that year</li>
 </ol>
+<pre class="r"><code># create a column to test if winning % increased for team
+baseball$winincreased[baseball$winpercentdiff&lt;=0]&lt;- &quot;No&quot;
+baseball$winincreased[baseball$winpercentdiff&gt;0]&lt;- &quot;Yes&quot;
+
+baseball$winincreased &lt;- as.factor(baseball$winincreased)</code></pre>
+<ol start="20" style="list-style-type: decimal">
+<li>I created a column to test if teams % of MLB payroll increased from previous year</li>
+</ol>
+<pre class="r"><code># create a column to test if percent of mlb increased for team
+baseball$percentofmlbincreased[baseball$percentofmlbdiff&lt;=0]&lt;- &quot;No&quot;
+baseball$percentofmlbincreased[baseball$percentofmlbdiff&gt;0]&lt;- &quot;Yes&quot;
+
+baseball$percentofmlbincreased &lt;- as.factor(baseball$percentofmlbincreased)</code></pre>
+<ol start="21" style="list-style-type: decimal">
+<li>I created a column to test if a Teams Payroll rank increased from previous year</li>
+</ol>
+<pre class="r"><code># create column to test if payroll increased for team
+baseball$payrankincreased[baseball$payrankdiff&lt;=0]&lt;- &quot;No&quot;
+baseball$payrankincreased[baseball$payrankdiff&gt;0]&lt;- &quot;Yes&quot;
+
+baseball$payrankincreased &lt;- as.factor(baseball$payrankincreased)</code></pre>
 </div>
 
 
