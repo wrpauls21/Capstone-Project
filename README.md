@@ -28,4 +28,4 @@ spending in payroll per win and the the percentage of that money compared to tot
 5. Work in progress...
 
 ## Summary
-After doing some Analysis, I came to the conclusion that it is more important for teams to have a higher payroll rank than other teams, but that it does not necessarily mean they need to increase the amount of $$ spent unless they need to increase where they rank in terms of team payroll. Over a 162 game schedule my model expects the 30th ranked payroll to have about 15 less wins than if they had the 1st ranked payroll
+After doing some analysis, I came to the conclusion that it is more important for teams to have a higher payroll rank than other teams, but that it does not necessarily mean they need to increase the amount of $$ spent unless they need to increase where they rank in terms of team payroll. Over a 162 game schedule my model expects the 30th ranked payroll to have about 15 less wins than if they had the 1st ranked payroll
