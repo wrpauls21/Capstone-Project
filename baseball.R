@@ -212,7 +212,7 @@ payrolltest <- prop.test(x = c(224, 213), n = c((224+248), (213+199)))
 # Printing the results
 payrolltest
 
-################ Machine Learning #########################
+################ Machine Learning ######################### 
 
 #Linear regression summary with confidence interval      
 MLB <- lm(baseball$winpercent~baseball$payrank)

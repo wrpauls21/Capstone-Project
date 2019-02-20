@@ -17,7 +17,7 @@ library(tidyr)
 library(readr)
 ```
 
-## Data Wrangling 
+## Data Wrangling  
 
 For my Capstone project I will be pulling from the Teams and Salaries datasets from the Lahman package. Performing data wrangling tasks and merging them into a new dataset called baseball
 

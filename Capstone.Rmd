@@ -272,7 +272,6 @@ baseball$payrankincreased <- as.factor(baseball$payrankincreased)
 This is the merged and cleaned data set I will be using for my analysis               
 ```{r}
 display_output(baseball, out_type)
-
 ```
 
 ## Probability & Statistics
