@@ -22,10 +22,9 @@ My project will be to explore the relationship of Payroll on an MLB team and the
 
 3. I will be using the data on payroll, winning % and playoff success aquired from Lahman's Baseball database (http://www.seanlahman.com/baseball-archive/statistics/)
 
-4. I will look at the correlation of payroll vs winning percentage and payroll vs playoff success. I will calculate how much a team is 
-spending in payroll per win and the the percentage of that money compared to total mlb payroll that year.
+4. I will look at the correlation of payroll rank and % of MLB payroll a team has vs winning percentage
 
-5. Work in progress...
+5. See full repository
 
 ## Summary
-* Key findings of analysis will be here soon
+After doing some analysis, I came to the conclusion that it is more important for teams to have a higher payroll rank than other teams, but that it does not necessarily mean they need to increase the amount of $$ spent unless they need to increase where they rank in terms of team payroll. Over a 162 game schedule my model expects the 30th ranked payroll to have about 15 less wins than if they had the 1st ranked payroll
