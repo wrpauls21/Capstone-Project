@@ -191,9 +191,9 @@ confint(MLB)
 ```
 The P-value is practically 0 so there is a signifcant result and we can reject the null hypothesis and conclude that there is a linear realtionship between a teams winning % and where they rank in Team Payroll.
 
-```{r}
-plot(baseball$winpercent~jitter(baseball$payrank), main = "Win % vs Payroll Rank", xlab = "Payroll Rank", ylab = "Win %", pch = 16, col = "dark grey")
-abline(MLB)
+```{r, echo=FALSE}
+winvsrank <- ggplot(baseball, aes(payrank, winpercent)) + geom_jitter() +  stat_smooth(method = "lm", col = "red") + labs(title = "Win % vs Payroll Rank", x = "Payroll Rank", y = "Win %") 
+winvsrank + scale_x_continuous(breaks=c(5,10,15,20,25,30)) 
 ```
 
 ### Testing Linear Regression Assumptions

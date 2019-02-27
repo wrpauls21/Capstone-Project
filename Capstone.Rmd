@@ -3,14 +3,14 @@ title: "Capstone Project"
 author: "Will Pauls"
 date: "February 18, 2019"
 output:
-  word_document: default
+  html_document:
+    toc: yes
+    toc_float: yes
   md_document: default
   odt_document: default
   pdf_document: default
   rtf_document: default
-  html_document:
-    toc: yes
-    toc_float: yes
+  word_document: default
 subtitle: MLB Payroll vs Winning
 ---
 
@@ -29,6 +29,8 @@ library(dplyr)
 library(car)
 library(MASS)
 library(gvlma)
+library(ggplot2)
+library(scales)
 
 # declare global chunk options
 # knitr::opts_chunk$set(echo = FALSE)
@@ -65,17 +67,17 @@ For this project, I have team and salary data for the 1985 through 2016 seasons 
 
 ## Data wrangling 
 
-For my Capstone project I will be pulling from the Teams and Salaries datasets from the Lahman package. Performing data wrangling tasks and merging them into a new dataset called baseball
+For my Capstone project I will be pulling from the Teams and Salaries data sets from the Lahman package. Performing data wrangling tasks and merging them into a new data set called baseball
        
 **Steps**       
-1. Load in Teams dataset with necessary variables
+1. Load in Teams data set with necessary variables
 ```{r, warning=FALSE, message=FALSE}
 
 # make team data frame with necessary variables
 teams = Teams
 teams = subset(teams, select = c(yearID, lgID, teamID, Rank, G, W, L, DivWin, WCWin)) 
 ```
-2. Since Salary info dates back only to 1985 I filtered the Teams dataset from 1985 and on to match 
+2. Since Salary info dates back only to 1985 I filtered the Teams data set from 1985 and on to match 
 ```{r, warning=FALSE}
 # grab teams from 1985 and on to match with years of payroll information
 teams = filter(teams, yearID >=1985)
@@ -93,7 +95,7 @@ teams$WCWin[is.na(teams$WCWin)] <- "N"
 teams <- mutate(teams, playoffs = if_else(DivWin == 'Y' | WCWin == 'Y', 'Y', 'N'))
 teams = subset(teams, select = -c(DivWin, WCWin))
 ```
-5. I loaded in the Salaries dataset
+5. I loaded in the Salaries data set
 ```{r, warning=FALSE, message=FALSE}
 # add salaries to a data frame
 sals = read_csv("Salaries.csv") 
@@ -136,7 +138,7 @@ teams$teamID[teams$teamID=="TBA"] <- "TBR"
 teams$teamID[teams$teamID=="WSN"] <- "WAS"
 teams$teamID <- as.factor(teams$teamID)
 ```
-8. I merged the teams and salaries datasets into a new one I named baseball
+8. I merged the teams and salaries data sets into a new one I named baseball
 ```{r}
 # merge data into baseball
 baseball <- merge(teams, sals, by=c("yearID", "teamID"))
@@ -227,7 +229,7 @@ baseball<- baseball %>%
   group_by(teamID) %>%
   mutate(percentofmlbdiff = percentofmlb - lag(percentofmlb)) 
 ```
-17. I created a column with the differencr in Payroll Rank from the previous year
+17. I created a column with the difference in Payroll Rank from the previous year
 ```{r}
 ## calculate change in payroll rank from previous year
 baseball<- baseball %>%
@@ -350,7 +352,7 @@ Since the p-value is .2337 we  do not have enough evidence to reject the null hy
 
 ### Conclusion
 
-Looking at the proportions of teams whose winning increased after they increased their rank in payroll and after they increased their % of MLB payroll, it is apparent that the amount of money a team puts into their payroll isn't necessarily as important as where they rank in team payroll regardless of how much they spend. For this reason, our linear regrssion model we will use in the Machine Learning section will use Payroll Rank as the Independent variable.
+Looking at the proportions of teams whose winning increased after they increased their rank in payroll and after they increased their % of MLB payroll, it is apparent that the amount of money a team puts into their payroll isn't necessarily as important as where they rank in team payroll regardless of how much they spend. For this reason, our linear regression model we will use in the Machine Learning section will use Payroll Rank as the Independent variable.
 
 ## Machine Learning
 
@@ -370,11 +372,11 @@ summary(MLB)
 confint(MLB)
 
 ```
-The P-value is practically 0 so there is a signifcant result and we can reject the null hypothesis and conclude that there is a linear realtionship between a teams winning % and where they rank in Team Payroll.
+The P-value is practically 0 so there is a significant result and we can reject the null hypothesis and conclude that there is a linear relationship between a teams winning % and where they rank in Team Payroll.
 
-```{r}
-plot(baseball$winpercent~jitter(baseball$payrank), main = "Win % vs Payroll Rank", xlab = "Payroll Rank", ylab = "Win %", pch = 16, col = "dark grey")
-abline(MLB)
+```{r, echo=FALSE}
+winvsrank <- ggplot(baseball, aes(payrank, winpercent)) + geom_jitter() +  stat_smooth(method = "lm", col = "red") + labs(title = "Win % vs Payroll Rank", x = "Payroll Rank", y = "Win %") 
+winvsrank + scale_x_continuous(breaks=c(5,10,15,20,25,30)) 
 ```
 
 ### Testing Linear Regression Assumptions
@@ -385,7 +387,7 @@ abline(MLB)
 
 outlierTest(MLB) # Bonferonni p-value for most extreme obs
 ```
-There are no outliers that would influence our model in a signifcant way.
+There are no outliers that would influence our model in a significant way.
 
 ####Normality of Residuals                               
 ```{r}
@@ -431,8 +433,25 @@ All assumptions to our linear model are acceptable.
 
 ## Conclusion
 
-The plot of team payroll rank and winning % showed a clear negative linear relationship. Meaning that as the Teams drop lower in the ranks of team payroll, their winning % is expected to also decrease. After performing all the diagnostic tests, the model passed each one confirming that it is a good model fit. The summary of the model showed a significant relationship between payroll rank and winning % at an $\alpha$ = .05 level, therefore, we can reject the null hypothesis $H_0$ and conclude, $H_a$ that there is a relationship between where a team ranks in team payroll and their winning %. According to our model for every spot a team drops in team payroll rank, their winning % is expected to decrease by 0.3%, and over a 162 game season that would be alomost 15 less wins expected  for the 30th ranked payroll vs the 1st ranked Payroll.
+The plot of team payroll rank and winning % showed a clear negative linear relationship. Meaning that as the Teams drop lower in the ranks of team payroll, their winning % is expected to also decrease. After performing all the diagnostic tests, the model passed each one confirming that it is a good model fit. The summary of the model showed a significant relationship between payroll rank and winning % at an $\alpha$ = .05 level, therefore, we can reject the null hypothesis $H_0$ and conclude, $H_a$ that there is a relationship between where a team ranks in team payroll and their winning %. According to our model for every spot a team drops in team payroll rank, their winning % is expected to decrease by 0.3%, and over a 162 game season that would be almost 15 less wins expected  for the 30th ranked payroll vs the 1st ranked Payroll.
 
 
 ### Discussion
-As a client for an MLB team I would report to them that the amount of money spent in team payroll isn't crucial in increasing your winning % as long as you are spending **more** than your competitors. It matters more to rank ahead of other teams in Payroll regardless of dollar amount spent than it does to just throw money at players. 
+As a client for an MLB team specifically the Royals, I would report to them that the amount of money spent in team payroll isn't crucial in increasing your winning % as long as you are spending **more** than your competitors. It matters more to rank ahead of other teams in Payroll regardless of dollar amount spent than it does to just throw money at players.                                       
+As evidenced by the additional plots below, the Royals follow a similar negative relationship between Payroll Rank and Win % that support my findings when looking at the entire MLB. They also have some of their best Payroll Ranks with some of their lowest Payrolls.
+
+#### Additional Plots
+```{r, echo = FALSE}
+Royals <- subset(baseball, teamID=="KCR")
+KC <- lm(winpercent~payrank, data = Royals)
+
+KCplot2 <- ggplot(Royals, aes(payrank, winpercent, label = playoffs, color = factor(playoffs))) + geom_text(color=ifelse(Royals$playoffs=="Y","royalblue3","black")) + stat_smooth(method = "lm", col = "red") + labs(title = "Royals Win % vs Payroll Rank", x = "Payroll Rank", y = "win %") 
+KCplot2 <- KCplot2 + theme(axis.title = element_text(colour="black", size=16), plot.title = element_text(colour="royalblue1", size=20))
+KCplot2 + scale_x_continuous(breaks=c(5,10,15,20,25,30))
+
+
+KCpay <- ggplot(Royals, aes(payrank, payroll))+ geom_point(color = "royalblue1") + labs(title = "Royals Payroll Amount vs Rank", x = "Payroll Rank", y = "Payroll") 
+KCpay <- KCpay + scale_y_continuous(breaks=c(25000000, 50000000,75000000, 100000000,125000000 ), labels = dollar) 
+KCpay
+```
+

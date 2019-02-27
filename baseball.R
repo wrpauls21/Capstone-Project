@@ -221,8 +221,8 @@ summary(MLB)
 confint(MLB)
 
 # plot Win % vs Payrank
-plot(baseball$winpercent~jitter(baseball$payrank), main = "Win % vs Payroll Rank", xlab = "Payroll Rank", ylab = "Win %", pch = 16, col = "dark grey")
-abline(MLB)
+winvsrank <- ggplot(baseball, aes(payrank, winpercent)) + geom_jitter() +  stat_smooth(method = "lm", col = "red") + labs(title = "Win % vs Payroll Rank", x = "Payroll Rank", y = "win %") 
+winvsrank + scale_x_continuous(breaks=c(5,10,15,20,25,30))
 
 
 # Testing Linear Regression Assumptions
@@ -261,4 +261,75 @@ ncvTest(MLB)
 gvmodel <- gvlma(MLB) 
 summary(gvmodel)
 #########################################################
+
+library(scales)
+############## More data Visualization ######################
+winvsrank <- ggplot(baseball, aes(payrank, winpercent)) + geom_jitter() +  stat_smooth(method = "lm", col = "red") + labs(title = "Win % vs Payroll Rank", x = "Payroll Rank", y = "win %") 
+winvsrank + scale_x_continuous(breaks=c(5,10,15,20,25,30))
+
+Royals <- subset(baseball, teamID=="KCR")
+KC <- lm(winpercent~payrank, data = Royals)
+
+KCplot <- ggplot(Royals, aes(payrank, winpercent)) + geom_point() + stat_smooth(method = "lm", col = "red") + labs(title = "Royals Win % vs Payroll Rank", x = "Payroll Rank", y = "win %") 
+KCplot + scale_x_continuous(breaks=c(5,10,15,20,25,30))
+
+# same plot using whether they made playoffs as icon label
+KCplot2 <- ggplot(Royals, aes(payrank, winpercent, label = playoffs, color = factor(playoffs))) + geom_text(color=ifelse(Royals$playoffs=="Y","royalblue3","black")) + stat_smooth(method = "lm", col = "red") + labs(title = "Royals Win % vs Payroll Rank", x = "Payroll Rank", y = "win %") 
+KCplot2 <- KCplot2 + theme(axis.title = element_text(colour="black", size=16), plot.title = element_text(colour="royalblue1", size=20))
+KCplot2 + scale_x_continuous(breaks=c(5,10,15,20,25,30))
+
+
+
+
+KCpay <- ggplot(Royals, aes(payrank, payroll))+ geom_point(color = "royalblue1") + labs(title = "Royals Payroll Amount vs Rank", x = "Payroll Rank", y = "Payroll") 
+KCpay <- KCpay + scale_y_continuous(breaks=c(25000000, 50000000,75000000, 100000000,125000000 ), labels = dollar) 
+KCpay + theme(axis.title = element_text(colour="black", size=16), plot.title = element_text(colour="black", size=20)) 
+
+ggplot(baseball, aes(x = playoffs, y = payrank)) +
+  geom_boxplot() +  labs(x = "Made Playoffs?", y = "Payroll Rank") 
+
+
+ggplot(subset(baseball, !is.na(payincreased)), aes(x = payincreased , y = winpercent)) +
+  geom_boxplot() +  labs(x = "Payroll Increased from Previous Yerar?", y = "Win %")
+
+
+
+
+
+
+
+
+
+
+
+
+# same plot using whether they made playoffs as icon label
+KCplot2 <- ggplot(Royals, aes(payrank, winpercent, label = playoffs, color = factor(playoffs))) +
+  geom_text(aes(size= Royals$payroll)) + 
+  stat_smooth(method = "lm", col = "red") +
+  labs(title = "Royals Win % vs Payroll Rank", x = "Payroll Rank", y = "win %") +
+  scale_color_manual(values = c("black" , "royalblue1"), name = "Made Playoffs?") +
+  guides(size=guide_legend(title="Payroll $"))
+
+KCplot2 <- KCplot2 + theme(axis.title = element_text(colour="black", size=16), plot.title = element_text(colour="royalblue1", size=20))
+
+KCplot2 + scale_x_continuous(breaks=c(5,10,15,20,25,30))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
