@@ -19,17 +19,17 @@ library(readr)
 
 ## Data Wrangling  
 
-For my Capstone project I will be pulling from the Teams and Salaries datasets from the Lahman package. Performing data wrangling tasks and merging them into a new dataset called baseball
+For my Capstone project I will be pulling from the Teams and Salaries data sets from the Lahman package. Performing data wrangling tasks and merging them into a new data set called baseball
 
 ## Steps
-1. Load in Teams dataset with necessary variables
+1. Load in Teams data set with necessary variables
 ```{r, warning=FALSE, message=FALSE}
 
 # make team data frame with necessary variables
 teams = Teams
 teams = subset(teams, select = c(yearID, lgID, teamID, Rank, G, W, L, DivWin, WCWin)) 
 ```
-2. Since Salary info dates back only to 1985 I filtered the Teams dataset from 1985 and on to match 
+2. Since Salary info dates back only to 1985 I filtered the Teams data set from 1985 and on to match 
 ```{r, warning=FALSE}
 # grab teams from 1985 and on to match with years of payroll information
 teams = filter(teams, yearID >=1985)
@@ -47,7 +47,7 @@ teams$WCWin[is.na(teams$WCWin)] <- "N"
 teams <- mutate(teams, playoffs = if_else(DivWin == 'Y' | WCWin == 'Y', 'Y', 'N'))
 teams = subset(teams, select = -c(DivWin, WCWin))
 ```
-5. I loaded in the Salaries dataset
+5. I loaded in the Salaries data set
 ```{r, warning=FALSE, message=FALSE}
 # add salaries to a data frame
 sals = read_csv("Salaries.csv") 
@@ -90,7 +90,7 @@ teams$teamID[teams$teamID=="TBA"] <- "TBR"
 teams$teamID[teams$teamID=="WSN"] <- "WAS"
 teams$teamID <- as.factor(teams$teamID)
 ```
-8. I merged the teams and salaries datasets into a new one I named baseball
+8. I merged the teams and salaries data sets into a new one I named baseball
 ```{r}
 # merge data into baseball
 baseball <- merge(teams, sals, by=c("yearID", "teamID"))
@@ -181,7 +181,7 @@ baseball<- baseball %>%
   group_by(teamID) %>%
   mutate(percentofmlbdiff = percentofmlb - lag(percentofmlb)) 
 ```
-17. I created a column with the differencr in Payroll Rank from the previous year
+17. I created a column with the difference in Payroll Rank from the previous year
 ```{r}
 ## calculate change in payroll rank from previous year
 baseball<- baseball %>%
