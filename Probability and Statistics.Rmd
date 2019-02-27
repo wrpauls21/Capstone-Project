@@ -243,4 +243,4 @@ Since the p-value is .2337 we  do not have enough evidence to reject the null hy
 
 ### Conclusion
 
-Looking at the proportions of teams whose winning increased after they increased their rank in payroll and after they increased their % of MLB payroll, it is apparent that the amount of money a team puts into their payroll isn't necessarily as important as where they rank in team payroll regardless of how much they spend. For this reason, our linear regrssion model we will use in the Machine Learning section will use Payroll Rank as the Independent variable. 
+Looking at the proportions of teams whose winning increased after they increased their rank in payroll and after they increased their % of MLB payroll, it is apparent that the amount of money a team puts into their payroll isn't necessarily as important as where they rank in team payroll regardless of how much they spend. For this reason, our linear regression model we will use in the Machine Learning section will use Payroll Rank as the Independent variable. 

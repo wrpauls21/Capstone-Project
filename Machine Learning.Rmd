@@ -1,5 +1,5 @@
 ---
-title: "Probability and Statistics"
+title: "Machine Learning"
 author: "Will Pauls"
 date: "February 19, 2019"
 output:
@@ -189,7 +189,7 @@ summary(MLB)
 confint(MLB)
 
 ```
-The P-value is practically 0 so there is a signifcant result and we can reject the null hypothesis and conclude that there is a linear realtionship between a teams winning % and where they rank in Team Payroll.
+The P-value is practically 0 so there is a significant result and we can reject the null hypothesis and conclude that there is a linear relationship between a teams winning % and where they rank in Team Payroll.
 
 ```{r, echo=FALSE}
 winvsrank <- ggplot(baseball, aes(payrank, winpercent)) + geom_jitter() +  stat_smooth(method = "lm", col = "red") + labs(title = "Win % vs Payroll Rank", x = "Payroll Rank", y = "Win %") 
@@ -204,7 +204,7 @@ winvsrank + scale_x_continuous(breaks=c(5,10,15,20,25,30))
 
 outlierTest(MLB) # Bonferonni p-value for most extreme obs
 ```
-There are no outliers that would influence our model in a signifcant way.
+There are no outliers that would influence our model in a significant way.
 
 ####Normality of Residuals                               
 ```{r}
@@ -250,4 +250,4 @@ All assumptions to our linear model are acceptable.
 
 ## Conclusion
 
-The plot of team payroll rank and winning % showed a clear negative linear relationship. Meaning that as the Teams drop lower in the ranks of team payroll, their winning % is expected to also decrease. After performing all the diagnostic tests, the model passed each one confirming that it is a good model fit. The summary of the model showed a significant relationship between payroll rank and winning % at an $\alpha$ = .05 level, therefore, we can reject the null hypothesis $H_0$ and conclude, $H_a$ that there is a relationship between where a team ranks in team payroll and their winning %. According to our model for every spot a team drops in team payroll rank, their winning % is expected to decrease by 0.3%, and over a 162 game season that would be alomost 15 less wins expected  for the 30th ranked payroll vs the 1st ranked Payroll.
+The plot of team payroll rank and winning % showed a clear negative linear relationship. Meaning that as the Teams drop lower in the ranks of team payroll, their winning % is expected to also decrease. After performing all the diagnostic tests, the model passed each one confirming that it is a good model fit. The summary of the model showed a significant relationship between payroll rank and winning % at an $\alpha$ = .05 level, therefore, we can reject the null hypothesis $H_0$ and conclude, $H_a$ that there is a relationship between where a team ranks in team payroll and their winning %. According to our model for every spot a team drops in team payroll rank, their winning % is expected to decrease by 0.3%, and over a 162 game season that would be almost 15 less wins expected  for the 30th ranked payroll vs the 1st ranked Payroll.
